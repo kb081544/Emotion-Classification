@@ -122,15 +122,6 @@ class preprocessing:
         np_peak = np.array(peak_shapes)
         print(np_peak.shape)
         return np_peak
-
-    def GMM_process(self, tot, data):
-        data = self.dividing_and_extracting()
-        print(np.shape(data))
-        data0 = data[data[:, 0] == 0]
-        data0 = data0[:, 1:]
-        data1 = data[data[:, 0] == 1]
-        data1 = data1[:, 1:]
-        return data0, data1
     def GMM_model(self, tot, data):
         if(tot=="train"):
             data=self.dividing_and_extracting()
