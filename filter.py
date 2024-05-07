@@ -123,45 +123,117 @@ class preprocessing:
         print(np_peak.shape)
         return np_peak
 
-    def GMM_model(self):
-        data=self.dividing_and_extracting()
+    def GMM_process(self, tot, data):
+        data = self.dividing_and_extracting()
+        print(np.shape(data))
         data0 = data[data[:, 0] == 0]
         data0 = data0[:, 1:]
         data1 = data[data[:, 0] == 1]
         data1 = data1[:, 1:]
+        return data0, data1
+    def GMM_model(self, tot, data):
+        if(tot=="train"):
+            data=self.dividing_and_extracting()
+            print(np.shape(data))
+            data0 = data[data[:, 0] == 0]
+            data0 = data0[:, 1:]
+            data1 = data[data[:, 0] == 1]
+            data1 = data1[:, 1:]
+            global gmm_p
+            n_components = 2
+            gmm_p = GaussianMixture(n_components=n_components, covariance_type='full')
+            gmm_p.fit(data0)
 
-        n_components = 2
-        gmm_p = GaussianMixture(n_components=n_components, covariance_type='full')
-        gmm_p.fit(data0)
+            # 긍정 gmm model
+            labels = gmm_p.predict(data0)
+            outliers = data0[labels == 1]
+            normals = data0[labels == 0]
 
-        # 긍정 gmm model
-        labels = gmm_p.predict(data0)
-        outliers = data0[labels == 1]
-        normals = data0[labels == 0]
-        normals_y = np.zeros((normals.shape[0], 1))
-        g_x_p = np.concatenate((normals_y, normals), axis=1)
+            global gmm_n
+            # 부정 gmm model
+            gmm_n = GaussianMixture(n_components=n_components, covariance_type='full')
+            gmm_n.fit(data1)
+            labels = gmm_n.predict(data1)
+            outliers_n = data1[labels == 1]
+            normals_n = data1[labels == 0]
+            '''
+            이 부분이 헷갈림!
+            '''
+            global lab1
+            global lab0
 
-        # 부정 gmm model
-        gmm_n = GaussianMixture(n_components=n_components, covariance_type='full')
-        gmm_n.fit(data1)
-        labels = gmm_n.predict(data1)
-        outliers_n = data1[labels == 1]
-        normals_n = data1[labels == 0]
-        normals_n_y = np.ones((normals_n.shape[0], 1))
-        g_x_n = np.concatenate((normals_n_y, normals_n), axis=1)
+            if np.mean(normals_n) > np.mean(outliers_n):
+                spp1 = normals_n
+                lab1 = 0
+            else:
+                spp1 = outliers_n
+                lab1 = 1
+            if np.mean(normals) < np.mean(outliers):
+                spp0 = normals
+                lab0 = 0
+            else:
+                spp0 = outliers
+                lab0 = 1
+
+            m = np.max(spp1)
+            n = np.min(spp1)
+            normalized_train = []
+            for value in spp0:
+                normalized_num = (value - n) / (m - n)
+                normalized_train.append(normalized_num)
+            normalized_train_n = []
+            for value in spp1:
+                normalized_num = (value - n) / (m - n)
+                normalized_train_n.append(normalized_num)
+
+            normalized_train = np.array(normalized_train)
+            normalized_train_n = np.array(normalized_train_n)
+
+            normals_y = np.zeros((normalized_train.shape[0], 1))
+            g_x_p = np.concatenate((normals_y, normalized_train), axis=1)
+            normals_n_y = np.ones((normalized_train_n.shape[0], 1))
+            g_x_n = np.concatenate((normals_n_y, normalized_train_n), axis=1)
+
+            data = np.concatenate((g_x_p, g_x_n))
+            np.random.shuffle(data)
+            data_x = data[:, 1:]
+            data_y = data[:, 0]
+
 
         # negative, positive 합쳐서 shuffle
         # 본격적인 학습 준비 단계
-        data = np.concatenate((g_x_p, g_x_n))
-        np.random.shuffle(data)
 
-        data_x = data[:, 1:]
-        data_y = data[:, 0]
+        if(tot=="test"):
+            data=self.dividing_and_extracting()
+            d=np.array(data)
+            dy=d[:,0]
+            d = d[:, 1:]
+
+            #d = data.reshape(1, -1)
+            lb1 = gmm_n.predict(d)
+            lb2 = gmm_p.predict(d)
+            '''
+            ValueError: The truth value of an array with more than one element is ambiguous. Use a.any() or a.all()
+            '''
+            if lb1 != lab1 and lb2 != lab0:
+                 pass
+            else:
+                 tst = d
+
+            normalized = []
+            for value in tst:
+                normalized_num = (value - n) / (m - n)
+                normalized.append(normalized_num)
+            data = np.array(normalized)
+            data_x = data
+            data_y = dy
+
+
 
         # g_x = np.concatenate((normals, normals_n), axis=0)
         # g_y = np.concatenate((normals_y, normals_n_y), axis=0)
-        if(self.tot=="train"):
+        if(tot=="train"):
             x_train_g, x_test_g, y_train_g, y_test_g = train_test_split(data_x, data_y, test_size=0.2)
             return x_train_g, x_test_g, y_train_g, y_test_g
-        elif(self.tot=="test"):
+        elif(tot=="test"):
             return data_x, data_y
