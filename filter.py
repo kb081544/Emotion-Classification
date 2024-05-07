@@ -166,6 +166,8 @@ class preprocessing:
                 spp0 = outliers
                 lab0 = 1
 
+            global m
+            global n
             m = np.max(spp1)
             n = np.min(spp1)
             normalized_train = []
@@ -199,17 +201,18 @@ class preprocessing:
             d=np.array(data)
             dy=d[:,0]
             d = d[:, 1:]
-
+            tst = []
             #d = data.reshape(1, -1)
             lb1 = gmm_n.predict(d)
             lb2 = gmm_p.predict(d)
             '''
             ValueError: The truth value of an array with more than one element is ambiguous. Use a.any() or a.all()
             '''
-            if lb1 != lab1 and lb2 != lab0:
-                 pass
-            else:
-                 tst = d
+            for i in range(len(lb1)):
+                if lb1[i] != lab1 and lb2[i] != lab0:
+                     pass #여기가 이상치 제거되는 부분
+                else:
+                     tst.append(d[i])
 
             normalized = []
             for value in tst:
