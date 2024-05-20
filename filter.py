@@ -36,7 +36,6 @@ class preprocessing:
                 x_chunk = sublist[i:i + self.chunk_size]
                 filtered = hp.filter_signal(x_chunk, [0.5, 8], sample_rate=25, order=3,
                                             filtertype='bandpass')
-                # sublist = nk.ppg_clean(x_chunk, method='elgendi')
                 try:
                     wd, m = hp.process(filtered, sample_rate=25)
                     if (len(wd['peaklist']) != 0):
@@ -117,20 +116,20 @@ class preprocessing:
                     peak_shape = temp[index - 13:index + 14]
                     peak_shape = np.concatenate((np.array([temp_y]), peak_shape))
                     peak_shapes.append(peak_shape)
-                # else:
-                #     fake_index.append(index + l)
+
         np_peak = np.array(peak_shapes)
         print(np_peak.shape)
         return np_peak
-    def GMM_model(self, tot, data):
-        if(tot=="train"):
-            data=self.dividing_and_extracting()
+
+    def GMM_model(self, tot, gmm_p=None, gmm_n=None):
+        if tot == "train":
+            data = self.dividing_and_extracting()
             print(np.shape(data))
             data0 = data[data[:, 0] == 0]
             data0 = data0[:, 1:]
             data1 = data[data[:, 0] == 1]
             data1 = data1[:, 1:]
-            global gmm_p
+
             n_components = 2
             gmm_p = GaussianMixture(n_components=n_components, covariance_type='full')
             gmm_p.fit(data0)
@@ -140,16 +139,13 @@ class preprocessing:
             outliers = data0[labels == 1]
             normals = data0[labels == 0]
 
-            global gmm_n
             # 부정 gmm model
             gmm_n = GaussianMixture(n_components=n_components, covariance_type='full')
             gmm_n.fit(data1)
             labels = gmm_n.predict(data1)
             outliers_n = data1[labels == 1]
             normals_n = data1[labels == 0]
-            '''
-            이 부분이 헷갈림!
-            '''
+
             global lab1
             global lab0
 
@@ -192,42 +188,34 @@ class preprocessing:
             data_x = data[:, 1:]
             data_y = data[:, 0]
 
+            x_train_g, x_test_g, y_train_g, y_test_g = train_test_split(data_x, data_y, test_size=0.2)
+            return x_train_g, x_test_g, y_train_g, y_test_g, gmm_p, gmm_n
 
-        # negative, positive 합쳐서 shuffle
-        # 본격적인 학습 준비 단계
+        elif tot == "test":
+            if gmm_p is None or gmm_n is None:
+                raise ValueError("GMM models must be provided for test data")
 
-        if(tot=="test"):
-            data=self.dividing_and_extracting()
-            d=np.array(data)
-            dy=d[:,0]
+            data = self.dividing_and_extracting()
+            d = np.array(data)
+            dy = d[:, 0]
             d = d[:, 1:]
             tst = []
-            #d = data.reshape(1, -1)
+
             lb1 = gmm_n.predict(d)
             lb2 = gmm_p.predict(d)
-            '''
-            ValueError: The truth value of an array with more than one element is ambiguous. Use a.any() or a.all()
-            '''
+
             for i in range(len(lb1)):
                 if lb1[i] != lab1 and lb2[i] != lab0:
-                     pass #여기가 이상치 제거되는 부분
+                    pass
                 else:
-                     tst.append(d[i])
+                    tst.append(d[i])
 
             normalized = []
             for value in tst:
                 normalized_num = (value - n) / (m - n)
                 normalized.append(normalized_num)
+
             data = np.array(normalized)
             data_x = data
             data_y = dy
-
-
-
-        # g_x = np.concatenate((normals, normals_n), axis=0)
-        # g_y = np.concatenate((normals_y, normals_n_y), axis=0)
-        if(tot=="train"):
-            x_train_g, x_test_g, y_train_g, y_test_g = train_test_split(data_x, data_y, test_size=0.2)
-            return x_train_g, x_test_g, y_train_g, y_test_g
-        elif(tot=="test"):
             return data_x, data_y
