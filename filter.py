@@ -107,6 +107,7 @@ class preprocessing:
             temp = new_data[i, :]
             temp_y=new_data_y[i]
             wd, m = hp.process(temp, sample_rate=25)
+
             peaks = wd['peaklist']
             fake_peaks = wd['removed_beats']
             fake_index.extend(fake_peaks)
@@ -189,7 +190,7 @@ class preprocessing:
             data_y = data[:, 0]
 
             x_train_g, x_test_g, y_train_g, y_test_g = train_test_split(data_x, data_y, test_size=0.2)
-            return x_train_g, x_test_g, y_train_g, y_test_g, gmm_p, gmm_n
+            return x_train_g, x_test_g, y_train_g, y_test_g, gmm_p, gmm_n, lab0, lab1, m, n
 
         elif tot == "test":
             if gmm_p is None or gmm_n is None:
