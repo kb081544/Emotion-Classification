@@ -10,7 +10,7 @@ class read:
         data_list = []
         for file_path in self.data:
             print(f"Reading file: {file_path}")
-            file_data = []  # List to store data from the current file
+            file_data = []
             file_data.append(self.y)
             with open(file_path, 'r') as file:
                 lines = file.readlines()
