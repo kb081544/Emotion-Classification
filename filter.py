@@ -9,8 +9,7 @@ from sklearn.model_selection import train_test_split
 from sklearn.mixture import GaussianMixture
 
 window_size_green = 300
-overlap = 0
-
+overlap = 30
 
 class preprocessing:
     def __init__(self, data, train_or_test, overlap, chunk_size):
@@ -44,11 +43,11 @@ class preprocessing:
 
                     """PPG 신호 피크가 존재하는 데이터에 대해서 빨갛게 표시된 피크들을 제거하고, 심박수 특징 추출"""
                     if (len(wd['peaklist']) != 0):
-                        sum += (len(wd['peaklist']) - len(wd['removed_beats']))
-                        sum_removed += len(wd['removed_beats'])
-                        temp = wd['hr']
+                        sum += (len(wd['peaklist']) - len(wd['removed_beats'])) #초록색 피크들의 총 합 계산(평균을 내기 위해)
+                        sum_removed += len(wd['removed_beats']) #빨강색 피크
+                        temp = wd['hr'] #bandpass를 통과한 chunk, 즉 300개의 신호
                         # print(temp)
-                        temp_pk = (len(wd['peaklist']) - len(wd['removed_beats']))
+                        temp_pk = (len(wd['peaklist']) - len(wd['removed_beats'])) #초록색 피크의 개수
                         if (cnt == 0):
                             x_result = temp
                         else:
@@ -68,9 +67,7 @@ class preprocessing:
                     print("예외처리")
                     continue
         pk_np = np.array(pk_list)
-        # print(x_result)
         print(x_result.shape)
-        # print(pk_np)
         print(pk_np.shape)
         print("cnt: ", cnt)
         print('exc: ', exc)
@@ -80,22 +77,18 @@ class preprocessing:
         """ 트레인 데이터의 경우 bpm 평균을 구함 """
         if(self.tot=="train"):
             for j in range(cnt):
-                # available_signal.append(pk_list[j])
                 x_new_result.append(x_result[j])
                 y_new_result.append(y_result[j])
                 new_temp += m['bpm']
                 new_cnt += 1
             new_avg = new_temp / new_cnt
-            # 개수 평균이 아닌 bpm 평균 계산해야함
             print("heartpy 평균: ", new_avg)
-            # print(new_avg.quantile(q=))
             print("cnt: ", cnt)
             print('exc: ', exc)
             print("필터링 후 데이터셋 개수: ", len(x_new_result))
             print("y result: ", len(y_new_result))
             print(sum_removed)
             return x_new_result, y_new_result
-
         elif(self.tot=="test"):
             return x_result, y_result
     def dividing_and_extracting(self):
