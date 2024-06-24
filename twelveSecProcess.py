@@ -12,8 +12,8 @@ import tensorflow as tf
 chunk_size=300
 overlap=0
 
-file_positive_green = glob.glob(r"P_temp\green\*.txt")
-file_negative_green=glob.glob(r"N_temp\green\*.txt")
+file_positive_green = glob.glob(r"P\green\*.txt")
+file_negative_green=glob.glob(r"N\green\*.txt")
 model_path="best_model.h5"
 twelveSec=glob.glob("12sec.txt")
 
