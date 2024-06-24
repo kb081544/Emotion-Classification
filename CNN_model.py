@@ -54,8 +54,8 @@ class model:
         # print("예측")
         # print(np.round(predictions))
         # now=datetime.now()
-        model_name = f'trained_per_peak_{int(score[1] * 100)}.h5'
-        model.save(model_name)
+        # model_name = f'trained_per_peak_{int(score[1] * 100)}.h5'
+        # model.save(model_name)
 
         return history, predictions, score
 
