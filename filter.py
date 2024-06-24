@@ -29,12 +29,13 @@ class preprocessing:
         sum = 0
         cnt = 0
         exc = 0
+        x_result=None
         for sublist, label in zip(data_x, data_y):
             for i in range(0, len(sublist) - self.chunk_size + 1, self.chunk_size - self.overlap):
                 x_chunk = sublist[i:i + self.chunk_size]
                 filtered = hp.filter_signal(x_chunk, [0.5, 8], sample_rate=25, order=3,
                                             filtertype='bandpass')
-                try:
+                try: # chunk의 전처리 후 process 함수가 실행이 안되는 경우가 꽤나 많아, 에러 표시로 인한 코드 실행 중지를 방지하기 위해 try except 문으로 구현
                     wd, m = hp.process(filtered, sample_rate=25)
                     if (len(wd['peaklist']) != 0):
                         sum += (len(wd['peaklist']) - len(wd['removed_beats'])) #초록색 피크들의 총 합 계산(평균을 내기 위해)
@@ -45,7 +46,7 @@ class preprocessing:
                         if (cnt == 0):
                             x_result = temp
                         else:
-                            x_result = np.vstack([x_result, temp])
+                            x_result = np.vstack([x_result, temp]) #x_result는 모든 전처리된 300의 신호의 모음
                     else:
                         exc += 1
                         temp_pk = 0
@@ -66,6 +67,7 @@ class preprocessing:
         print("cnt: ", cnt)
         print('exc: ', exc)
         print("y result: ", len(y_result))
+
         new_temp = 0
         new_cnt = 0
         if(self.tot=="train"):
