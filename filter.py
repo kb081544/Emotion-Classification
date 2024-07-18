@@ -147,10 +147,6 @@ class preprocessing:
             # 부정 gmm model
             gmm_n = GaussianMixture(n_components=n_components, covariance_type='full')
             gmm_n.fit(data1)
-            labels = gmm_n.predict(data1)
-            outliers_n = data1[labels == 1]
-            normals_n = data1[labels == 0]
-
             labels1 = gmm_n.predict(data1)
             outliers_n = data1[labels1 == 1]
             normals_n = data1[labels1 == 0]
