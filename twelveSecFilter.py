@@ -108,4 +108,3 @@ class GMM_model_twelve_sec:
         data_x = data
         data_y = dy
         return data_x, data_y
-

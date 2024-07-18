@@ -110,15 +110,15 @@ class preprocessing:
         for i in range(len(new_data)):
             temp = new_data[i, :]
             temp_y=new_data_y[i]
-            wd, m = hp.process(temp, sample_rate=25) # HeartPy로 신호 처리
+            wd, m = hp.process(temp, sample_rate=25)
 
-            peaks = wd['peaklist']  # 피크 리스트
-            fake_peaks = wd['removed_beats']  # 제거된 피크 리스트
+            peaks = wd['peaklist']
+            fake_peaks = wd['removed_beats']
             fake_index.extend(fake_peaks)
-            real_peaks = [item for item in peaks if item not in fake_peaks] # 실제 피크만 추출
+            real_peaks = [item for item in peaks if item not in fake_peaks]
             for index in real_peaks:
-                if not ((index - 13 < 0) or (index + 14 >= new_data.shape[1])): # 실제 피크 주변 27개의 신호를 포함할 수 있는지 확인
-                    peak_shape = temp[index - 13:index + 14] # 피크 주변 27 포인트 추출 -> 싱글펄스 (1.1초)
+                if not ((index - 13 < 0) or (index + 14 >= new_data.shape[1])):
+                    peak_shape = temp[index - 13:index + 14]
                     peak_shape = np.concatenate((np.array([temp_y]), peak_shape))
                     peak_shapes.append(peak_shape)
 
@@ -153,10 +153,6 @@ class preprocessing:
 
             global lab1, lab0
 
-            # 각 클래스의 이상치와 정상 데이터의 평균을 비교하여 라벨 설정
-            # 부정데이터의 경우 평균이 더 큰 lable이 대표값으로 선정되고,
-            # 긍정데이터의 경우 평균이 더 작은 lable이 대표값으로 선정됨
-            # 그에따라 lab0, lab1이 정해짐
             if np.mean(normals_n) > np.mean(outliers_n):
                 spp1 = normals_n
                 lab1 = 0
@@ -172,9 +168,8 @@ class preprocessing:
 
             global m
             global n
-            m = np.max(spp1) #전체 데이터에서의 최대값
-            n = np.min(spp1) #전체 데이터에서의 최소값
-            # normalilzation 하는 부분
+            m = np.max(spp1)
+            n = np.min(spp1)
             normalized_train = []
             for value in spp0:
                 normalized_num = (value - n) / (m - n)
@@ -231,18 +226,15 @@ class preprocessing:
             d = d[:, 1:]
             tst = []
 
-            # GMM 모델을 사용하여 테스트 데이터의 라벨 예측 (긍정, 부정 모두)
             lb1 = gmm_n.predict(d)
             lb2 = gmm_p.predict(d)
 
-            #라벨이 lab1, lab2 중 하나라도 맞는 것이 없으면 이상치로 판단하여 제거
-            #즉, 테스트데이터가 gmm 모델에 적용되어 긍정 모델과 부정 모델 중 하나라도 맞지 않으면 pass됨
             for i in range(len(lb1)):
                 if lb1[i] != lab1 and lb2[i] != lab0:
                     pass
                 else:
                     tst.append(d[i])
-            # 정규화 과정
+
             normalized = []
             for value in tst:
                 normalized_num = (value - n) / (m - n)

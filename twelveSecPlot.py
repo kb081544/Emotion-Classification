@@ -26,4 +26,3 @@ class PeakPredictor:
         plt.ylabel('Signal Value')
         plt.show()
         return predictions  # 예측값 반환
-
