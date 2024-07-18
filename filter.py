@@ -1,12 +1,14 @@
 import numpy as np
 import heartpy as hp
-import csv
 import warnings
-warnings.filterwarnings(action='ignore')
-import read
-import glob
+from matplotlib.patches import Ellipse
 from sklearn.model_selection import train_test_split
 from sklearn.mixture import GaussianMixture
+import matplotlib.pyplot as plt
+from sklearn.decomposition import PCA
+
+warnings.filterwarnings(action='ignore')
+
 
 window_size_green = 300
 overlap = 30
@@ -67,15 +69,18 @@ class preprocessing:
         print("cnt: ", cnt)
         print('exc: ', exc)
         print("y result: ", len(y_result))
-
+        avg = sum / cnt
         new_temp = 0
         new_cnt = 0
         if(self.tot=="train"):
             for j in range(cnt):
-                x_new_result.append(x_result[j])
-                y_new_result.append(y_result[j])
-                new_temp += m['bpm']
-                new_cnt += 1
+                if pk_np[j] > avg:
+                    x_new_result.append(x_result[j])
+                    y_new_result.append(y_result[j])
+                    new_temp += m['bpm']
+                    new_cnt += 1
+                else:
+                    continue
             new_avg = new_temp / new_cnt
             print("heartpy 평균: ", new_avg)
             print("cnt: ", cnt)
@@ -86,12 +91,16 @@ class preprocessing:
             return x_new_result, y_new_result
         elif(self.tot=="test"):
             return x_result, y_result
+
+    # 40,000 이라는 수를 조정하기 위한 함수를 하나 더 만들어보자.
+    # 기준을 확정해야 함.
+
     def dividing_and_extracting(self):
         x,y=self.chunk_data_hp()
         peak_shapes = []
         fake_index = []
-
-        index = np.where(np.max(x, axis=1) >= 14000)[0]  # >= 14000, 알아서 자르는 수 조정
+        cutoff_n=40000
+        index = np.where(np.max(x, axis=1) >= cutoff_n)[0]
         new_data = np.delete(x, index, axis=0)
         new_data_y=np.delete(y, index, axis=0)
 
@@ -130,19 +139,19 @@ class preprocessing:
             gmm_p.fit(data0)
 
             # 긍정 gmm model
-            labels = gmm_p.predict(data0)
-            outliers = data0[labels == 1]
-            normals = data0[labels == 0]
+            labels0 = gmm_p.predict(data0)
+            outliers = data0[labels0 == 1]
+            normals = data0[labels0 == 0]
 
             # 부정 gmm model
             gmm_n = GaussianMixture(n_components=n_components, covariance_type='full')
             gmm_n.fit(data1)
-            labels = gmm_n.predict(data1)
-            outliers_n = data1[labels == 1]
-            normals_n = data1[labels == 0]
 
-            global lab1
-            global lab0
+            labels1 = gmm_n.predict(data1)
+            outliers_n = data1[labels1 == 1]
+            normals_n = data1[labels1 == 0]
+
+            global lab1, lab0
 
             if np.mean(normals_n) > np.mean(outliers_n):
                 spp1 = normals_n
@@ -184,6 +193,27 @@ class preprocessing:
             data_y = data[:, 0]
 
             x_train_g, x_test_g, y_train_g, y_test_g = train_test_split(data_x, data_y, test_size=0.2)
+
+            # Applying PCA to reduce dimensions to 2 for plotting
+            pca = PCA(n_components=2)
+            data0_pca = pca.fit_transform(data0)
+            data1_pca = pca.fit_transform(data1)
+
+            gmm_pca_0 = GaussianMixture(n_components=n_components, covariance_type='full')
+            gmm_pca_0.fit(data0_pca)
+            gmm_pca_1 = GaussianMixture(n_components=n_components, covariance_type='full')
+            gmm_pca_1.fit(data1_pca)
+
+            # Plotting GMMs
+            fig, ax = plt.subplots(1, 2, figsize=(14, 6))
+            plot_gmm(gmm_pca_0, data0_pca, labels0, ax[0])
+            plot_gmm(gmm_pca_1, data1_pca, labels1, ax[1])
+            ax[0].set_title("GMM for Class 0 (PCA Reduced)")
+            ax[1].set_title("GMM for Class 1 (PCA Reduced)")
+            ax[0].legend()
+            ax[1].legend()
+            plt.show()
+
             return x_train_g, x_test_g, y_train_g, y_test_g, gmm_p, gmm_n, lab0, lab1, m, n
 
         elif tot == "test":
@@ -214,3 +244,30 @@ class preprocessing:
             data_x = data
             data_y = dy
             return data_x, data_y
+
+
+def plot_gmm(gmm, data, labels, ax):
+    ax.scatter(data[labels == 0, 0], data[labels == 0, 1], s=0.8, label='Normal', color='blue')
+    ax.scatter(data[labels == 1, 0], data[labels == 1, 1], s=0.8, label='Anomaly', color='red')
+
+    w_factor = 0.2 / gmm.weights_.max()
+    for pos, covar, w in zip(gmm.means_, gmm.covariances_, gmm.weights_):
+        if covar.shape == (2, 2):
+            draw_ellipse(pos, covar, alpha=w * w_factor, ax=ax)
+    ax.set_xlabel('Principal Component 1')
+    ax.set_ylabel('Principal Component 2')
+
+def draw_ellipse(position, covariance, ax=None, **kwargs):
+    ax = ax or plt.gca()
+
+    if covariance.shape == (2, 2):
+        U, s, Vt = np.linalg.svd(covariance)
+        angle = np.degrees(np.arctan2(U[1, 0], U[0, 0]))
+        width, height = 2 * np.sqrt(s)
+    else:
+        raise ValueError("Covariance matrix should be 2x2")
+
+    for nsig in range(1, 4):
+        ax.add_patch(Ellipse(position, nsig * width, nsig * height,
+                             angle, **kwargs))
+
