@@ -21,6 +21,7 @@ train_list=p_train_list+n_train_list
 
 train_filtered=filter.preprocessing(data=train_list, chunk_size=chunk_size,train_or_test="train", overlap=overlap)
 x_train, x_test, y_train, y_test, gmm_p, gmm_n, lab0, lab1, m, n = train_filtered.GMM_model(tot="train")
+
 training=CNN_model.model(x_train, x_test, y_train, y_test)
 history, predictions, score=training.build_model()
 
