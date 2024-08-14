@@ -95,16 +95,18 @@ class GMM_model_twelve_sec:
 
         for i in range(len(lb1)):
             if lb1[i] != self.lab1 and lb2[i] != self.lab0:
-                pass
+                tst.append(-1)
             else:
                 tst.append(d[i])
 
         normalized = []
         for value in tst:
-            normalized_num = (value - self.n) / (self.m - self.n)
-            normalized.append(normalized_num)
-
-        data = np.array(normalized)
-        data_x = data
+            if isinstance(value, np.ndarray):
+                normalized_num = (value - self.n) / (self.m - self.n)
+                normalized.append(normalized_num)
+            else:
+                normalized.append(-1)
+        #data = np.array(normalized)
+        data_x = normalized
         data_y = dy
         return data_x, data_y

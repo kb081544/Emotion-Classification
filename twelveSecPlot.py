@@ -10,8 +10,12 @@ class PeakPredictor:
     def predict_peaks(self):
         predictions = []
         for peak in self.peaks:
-            pred = self.model.predict(peak.reshape(1, -1))
-            predictions.append(pred[0][0])
+            if isinstance(peak, np.ndarray):
+                p = np.array(peak)
+                pred = self.model.predict(p.reshape(1, -1))
+                predictions.append(pred[0][0])
+            else:
+                predictions.append(-1)
 
         count_ones = len([x for x in predictions if x > 0.73])
         count_zeros = len([x for x in predictions if 0 <= x <= 0.73])
@@ -34,8 +38,9 @@ class PeakPredictor:
         plt.figure(figsize=(12, 6))
         for i, peak in enumerate(self.peaks):
             pred = predictions
-            color = (1 - pred, 0, pred)  # 0에 가까우면 파란색, 1에 가까우면 빨간색
-            plt.plot(range(len(peak)), peak, color=color, alpha=0.5)
+            if isinstance(peak, np.ndarray):
+                color = (1 - pred, 0, pred)  # 0에 가까우면 파란색, 1에 가까우면 빨간색
+                plt.plot(range(len(peak)), peak, color=color, alpha=0.5)
         plt.title('Peaks with Prediction Colors')
         plt.xlabel('Sample Index')
         plt.ylabel('Signal Value')
