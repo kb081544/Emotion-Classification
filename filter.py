@@ -7,6 +7,8 @@ import read
 import glob
 from sklearn.model_selection import train_test_split
 from sklearn.mixture import GaussianMixture
+import pickle
+import joblib
 
 window_size_green = 300
 overlap = 30
@@ -196,10 +198,17 @@ class preprocessing:
             data_x = data[:, 1:]
             data_y = data[:, 0]
 
+
             x_train_g, x_test_g, y_train_g, y_test_g = train_test_split(data_x, data_y, test_size=0.2)
             return x_train_g, x_test_g, y_train_g, y_test_g, gmm_p, gmm_n, lab0, lab1, m, n
 
         elif tot == "test":
+            with open("list_v2.pickle", "rb") as fi:
+                test = pickle.load(fi)
+            lab0_f = test[0]
+            lab1_f = test[1]
+            m_f = test[2]
+            n_f = test[3]
             if gmm_p is None or gmm_n is None:
                 raise ValueError("GMM models must be provided for test data")
 
@@ -213,17 +222,23 @@ class preprocessing:
             lb1 = gmm_n.predict(d)
             lb2 = gmm_p.predict(d)
 
+            print("lb1: ", lb1)
+            print("lb2: ", lb2)
+            print("lb1: ", lab1_f)
+            print("lb0: ", lab0_f)
             #라벨이 lab1, lab2 중 하나라도 맞는 것이 없으면 이상치로 판단하여 제거
             #즉, 테스트데이터가 gmm 모델에 적용되어 긍정 모델과 부정 모델 중 하나라도 맞지 않으면 pass됨
             for i in range(len(lb1)):
-                if lb1[i] != lab1 and lb2[i] != lab0:
+                if lb1[i] != lab1_f and lb2[i] != lab0_f:
                     pass
                 else:
                     tst.append(d[i])
+
+
             # 정규화 과정
             normalized = []
             for value in tst:
-                normalized_num = (value - n) / (m - n)
+                normalized_num = (value - n_f) / (m_f - n_f)
                 normalized.append(normalized_num)
 
             data = np.array(normalized)

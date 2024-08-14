@@ -12,13 +12,28 @@ class PeakPredictor:
         for peak in self.peaks:
             pred = self.model.predict(peak.reshape(1, -1))
             predictions.append(pred[0][0])
-        return predictions
+
+        count_ones = len([x for x in predictions if x > 0.73])
+        count_zeros = len([x for x in predictions if 0 <= x <= 0.73])
+        count_neg_ones = len([x for x in predictions if x == -1])
+
+        l = count_ones + count_zeros + count_neg_ones
+
+        if count_neg_ones / l >= 0.8:
+            state = -1
+        else:
+            if count_ones / (count_ones + count_zeros) >= 0.3:
+                state = 1
+            else:
+                state = 0
+
+        return state
 
     def plot_peaks(self):
         predictions = self.predict_peaks()
         plt.figure(figsize=(12, 6))
         for i, peak in enumerate(self.peaks):
-            pred = predictions[i]
+            pred = predictions
             color = (1 - pred, 0, pred)  # 0에 가까우면 파란색, 1에 가까우면 빨간색
             plt.plot(range(len(peak)), peak, color=color, alpha=0.5)
         plt.title('Peaks with Prediction Colors')
