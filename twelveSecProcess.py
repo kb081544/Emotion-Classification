@@ -1,7 +1,5 @@
 import pickle
-
 import joblib
-
 import CNN_model
 import glob
 import filter
