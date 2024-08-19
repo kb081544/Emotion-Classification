@@ -10,7 +10,7 @@ class PeakPredictor:
     def predict_peaks(self):
         predictions = []
         for peak in self.peaks:
-            if isinstance(peak, np.ndarray):
+            if not np.all(peak == -1):
                 p = np.array(peak)
                 pred = self.model.predict(p.reshape(1, -1))
                 predictions.append(pred[0][0])
@@ -30,7 +30,6 @@ class PeakPredictor:
                 state = 1
             else:
                 state = 0
-
         return state
 
     def plot_peaks(self):

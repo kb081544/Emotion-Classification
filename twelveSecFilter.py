@@ -105,7 +105,7 @@ class GMM_model_twelve_sec:
                 normalized_num = (value - self.n) / (self.m - self.n)
                 normalized.append(normalized_num)
             else:
-                normalized.append(-1)
+                normalized.append(np.array([-1 for _ in range(27)]))
         #data = np.array(normalized)
         data_x = normalized
         data_y = dy
