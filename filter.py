@@ -95,9 +95,6 @@ class preprocessing:
         elif(self.tot=="test"):
             return x_result, y_result
 
-    # 40,000 이라는 수를 조정하기 위한 함수를 하나 더 만들어보자.
-    # 기준을 확정해야 함.
-
     def dividing_and_extracting(self):
         x,y=self.chunk_data_hp()
         peak_shapes = []
