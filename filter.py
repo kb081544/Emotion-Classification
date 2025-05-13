@@ -194,7 +194,6 @@ class preprocessing:
 
             x_train_g, x_test_g, y_train_g, y_test_g = train_test_split(data_x, data_y, test_size=0.2)
 
-            # Applying PCA to reduce dimensions to 2 for plotting
             pca = PCA(n_components=2)
             data0_pca = pca.fit_transform(data0)
             data1_pca = pca.fit_transform(data1)
@@ -204,7 +203,6 @@ class preprocessing:
             gmm_pca_1 = GaussianMixture(n_components=n_components, covariance_type='full')
             gmm_pca_1.fit(data1_pca)
 
-            # Plotting GMMs
             fig, ax = plt.subplots(1, 2, figsize=(14, 6))
             plot_gmm(gmm_pca_0, data0_pca, labels0, ax[0])
             plot_gmm(gmm_pca_1, data1_pca, labels1, ax[1])
