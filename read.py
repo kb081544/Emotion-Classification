@@ -6,7 +6,7 @@ class read:
         self.overlap=overlap
         self.y=y
 
-    def read_txt_files_with_skip(self): #레이블 유무로 test와 train을 나누자.
+    def read_txt_files_with_skip(self):
         data_list = []
         for file_path in self.data:
             print(f"Reading file: {file_path}")
